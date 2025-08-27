@@ -41,7 +41,11 @@ class DB_Manager:
         with conn:
             conn.executemany(sql, data)
             conn.commit()
-    
+    def __execute(self, sql):
+        conn = sqlite3.connect(self.database)
+        with conn:
+            conn.execute(sql)
+            conn.commit()
     def __select_data(self, sql, data = tuple()):
         conn = sqlite3.connect(self.database)
         with conn:
@@ -122,9 +126,11 @@ WHERE project_name=? AND user_id=?
     def delete_skill(self, project_id, skill_id):
         sql = "DELETE from skills WHERE skill_id = ? AND project_id = ?" # Doğru SQL sorgusunu buraya girin
         self.__executemany(sql, [(skill_id, project_id)])
+    def alter_projects(self, new_column_name, new_column_type):
+        sql = f"ALTER TABLE projects ADD COLUMN {new_column_name} {new_column_type}"
+        self.__execute(sql)
 
 
 if __name__ == '__main__':
     manager = DB_Manager(DATABASE)
-    manager.get_statuses()
-    manager.get_projects()
+    manager.alter_projects("screenshots", "TEXT")
