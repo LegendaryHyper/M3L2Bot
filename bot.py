@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from logic import DB_Manager
 from discord import ui, ButtonStyle
-from config import DATABASE, TOKEN # Kütüphane ve modüller
+from config import DATABASE, TOKEN  
 
 intents = discord.Intents.default() 
 intents.messages = True
@@ -22,21 +22,50 @@ class TestModal(ui.Modal, title='Test başlık'):
         if not interaction.response.is_done():
             # Gecikmeli yanıt için hazırlık yapma
             await interaction.response.defer()
-
+class ProjectModal(ui.Modal, title='Proje Ekleme'):
+    # Modal pencerede metin alanları tanımlama
+    project_name = ui.TextInput(label='Proje Adı')
+    project_link = ui.TextInput(label='Projeye Dair Bağlantı')
+    project_cur_status = ui.TextInput(label='Projenin Anlık Durumu')
+    project_description = ui.TextInput(label='Açıklama', required=False, style=discord.TextStyle.paragraph)
+    
+    def __init__(self, *, title = "Proje Ekleme", timeout = None, custom_id = "project_modal", user_id = None):
+        super().__init__(title=title, timeout=timeout, custom_id=custom_id)
+        self.user_id = user_id
+    
+    # Modal pencere istendiğinde çağrılan bir yöntem
+    async def on_submit(self, interaction: discord.Interaction):
+        # Girilen verilerle mesajı güncelleme
+        status_id = manager.get_status_id(self.project_cur_status.value)
+        
+        #await interaction.message.edit(content=f'Kısa metin: {self.field_1.value}\n'
+        #                                       f'Uzun metin: {self.field_2.value}')
+        # Yanıtın daha önce gönderilip gönderilmediğini kontrol etme
+        if self.project_description.value != "": # Açıklamada yazı olup olmadığının kontrolü. Yazı varsa açıklama dahil veri tabanına eklenir.
+            data = [self.user_id, self.project_name.value, self.project_description.value, self.project_link.value, status_id]
+            manager.insert_project_w_desc([tuple(data)])
+        else: # Açıklama boşsa açıklama olmaksızın eklenir.
+            data = [self.user_id, self.project_name.value, "No description", self.project_link.value, status_id]
+            manager.insert_project_w_desc([tuple(data)])
+        
+        if not interaction.response.is_done():
+            # Gecikmeli yanıt için hazırlık yapma
+            await interaction.response.defer()
 # Buton tanımlama
 class TestButton(ui.Button):
     # Belirli özellikler sahip bir butonun başlatılması
-    def __init__(self, label="Test etiketi", style=ButtonStyle.blurple, row=0):
+    def __init__(self, label="Proje ekle", style=ButtonStyle.blurple, row=0, user_id = None):
         super().__init__(label=label, style=style, row=row)
+        self.user_id = user_id
 
     # Butona basıldığında çağrılan bir yöntem
     async def callback(self, interaction: discord.Interaction):
         # Kullanıcıya doğrudan mesaj gönderme
-        await interaction.user.send("Bir butona bastınız")
+        #await interaction.user.send("Bir butona bastınız")
         # Butona basılan kanala bir mesaj gönderme
-        await interaction.message.channel.send("Bir butona bastınız")
+        #await interaction.message.channel.send("Bir butona bastınız")
         # Modal pencereyi açma
-        await interaction.response.send_modal(TestModal())
+        await interaction.response.send_modal(ProjectModal(user_id=self.user_id))
         # Basıldıktan sonra butonun stilini değiştirme
         self.style = ButtonStyle.gray
 
@@ -48,10 +77,11 @@ class TestButton(ui.Button):
 # Buton içeren bir pencere (görünüm) nesnesi tanımlama
 class TestView(ui.View):
     # Görünümü başlatma
-    def __init__(self):
+    def __init__(self, user_id = None):
         super().__init__()
         # Görünüme bir buton ekleme
-        self.add_item(TestButton(label="Test etiketi"))
+        self.user_id = user_id
+        self.add_item(TestButton(label="Proje ekle", user_id=self.user_id))
 
 bot = commands.Bot(command_prefix='!', intents=intents)
 manager = DB_Manager(DATABASE)
@@ -64,7 +94,7 @@ async def on_ready(): # Bot hazır olduğunda terminalde bildirir.
 @bot.command()
 async def test(ctx):
     # Bir buton içeren görünüm ile mesaj gönderme
-    await ctx.send("Aşağıdaki butona tıklayın:", view=TestView())
+    await ctx.send("Aşağıdaki butona tıklayın:", view=TestView(user_id=ctx.author.id))
 
 @bot.command(name='start') # (!start) komutu ile botun kendini tanıtması sağlanır.
 async def start_command(ctx):
