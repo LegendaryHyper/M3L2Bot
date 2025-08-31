@@ -92,7 +92,7 @@ async def on_ready(): # Bot hazır olduğunda terminalde bildirir.
 
 # Butonu gösteren bir komut
 @bot.command()
-async def test(ctx):
+async def project_window(ctx):
     # Bir buton içeren görünüm ile mesaj gönderme
     await ctx.send("Aşağıdaki butona tıklayın:", view=TestView(user_id=ctx.author.id))
 
@@ -106,11 +106,12 @@ async def info(ctx): # (!info) komutu ile diğer komutlara dair bilgi verdirtir.
     await ctx.send("""
 Kullanabileceğiniz komutlar şunlardır:
 
-!new_project - yeni bir proje eklemek
-!projects - tüm projelerinizi listelemek
-!update_projects - proje verilerini güncellemek
-!skills - belirli bir projeye beceri eklemek
-!delete - bir projeyi silmek
+!new_project - Yeni bir proje ekler.
+!projects - Tüm projelerinizi listeler.
+!update_projects - Proje verilerini günceller.
+!skills - Belirli bir projeye beceri ekler.
+!delete - Bir projeyi siler.
+!project_window - Etkileşimli bir pencereden yeni bir proje ekler.
 
 Ayrıca, proje adını yazarak projeyle ilgili tüm bilgilere göz atabilirsiniz!""")
 
